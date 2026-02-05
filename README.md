@@ -61,20 +61,7 @@ echo $result->toText();
 
 ## Supported Models
 
-This provider dynamically discovers available models from the Google AI API. Current flagship models include:
-
-**Text Generation (Gemini 3 Series)**
-- `gemini-3-pro` - Latest reasoning model for complex agentic workflows
-- `gemini-3-flash` - Best for complex multimodal understanding
-
-**Text Generation (Gemini 2.5 Series)**
-- `gemini-2.5-pro` - High-capability model with adaptive thinking
-- `gemini-2.5-flash` - Fast and capable with controllable thinking
-- `gemini-2.5-flash-lite` - Optimized for speed and cost-efficiency
-
-**Image Generation**
-- `gemini-2.5-flash-preview-image` - Multimodal image generation
-- `imagen-3.0-generate-002` - Dedicated image generation
+Available models are dynamically discovered from the Google AI API. This includes Gemini models for text generation (with multimodal input support) and Imagen models for image generation. See the [Google AI documentation](https://ai.google.dev/gemini-api/docs/models) for the full list of available models.
 
 ## Configuration
 

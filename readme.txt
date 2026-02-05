@@ -21,13 +21,7 @@ This plugin provides Google AI (Gemini) integration for the PHP AI Client SDK. I
 * Function calling support
 * Automatic provider registration
 
-**Supported Models:**
-
-Models are dynamically discovered from the API. Current flagship models include:
-
-* gemini-3-pro, gemini-3-flash (latest)
-* gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite
-* imagen-3.0-generate-002 (image generation)
+Available models are dynamically discovered from the Google AI API, including Gemini models for text generation and Imagen models for image generation.
 
 **Requirements:**
 
