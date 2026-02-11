@@ -27,6 +27,8 @@ if (!defined('ABSPATH')) {
     return;
 }
 
+require_once __DIR__ . '/src/autoload.php';
+
 /**
  * Registers the Google AI provider with the AI Client.
  *
