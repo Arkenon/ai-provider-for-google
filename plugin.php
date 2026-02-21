@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Plugin Name: Google AI Provider
- * Plugin URI: https://github.com/WordPress/google-ai-provider
- * Description: Google AI provider for the WordPress AI Client.
+ * Plugin Name: AI Provider for Google
+ * Plugin URI: https://github.com/WordPress/ai-provider-for-google
+ * Description: AI Provider for Google for the WordPress AI Client.
  * Requires at least: 6.9
  * Requires PHP: 7.4
  * Version: 1.0.0
@@ -11,7 +11,7 @@
  * Author URI: https://make.wordpress.org/ai/
  * License: GPL-2.0-or-later
  * License URI: https://spdx.org/licenses/GPL-2.0-or-later.html
- * Text Domain: google-ai-provider
+ * Text Domain: ai-provider-for-google
  *
  * @package WordPress\GoogleAiProvider
  */
@@ -30,7 +30,7 @@ if (!defined('ABSPATH')) {
 require_once __DIR__ . '/src/autoload.php';
 
 /**
- * Registers the Google AI provider with the AI Client.
+ * Registers the AI Provider for Google with the AI Client.
  *
  * @since 1.0.0
  *

@@ -1,4 +1,4 @@
-# Google AI Provider
+# AI Provider for Google
 
 A Google AI (Gemini) provider for the [PHP AI Client](https://github.com/WordPress/php-ai-client) SDK. Works as both a Composer package and a WordPress plugin.
 
@@ -12,13 +12,13 @@ A Google AI (Gemini) provider for the [PHP AI Client](https://github.com/WordPre
 ### As a Composer Package
 
 ```bash
-composer require wordpress/google-ai-provider
+composer require wordpress/ai-provider-for-google
 ```
 
 ### As a WordPress Plugin
 
 1. Download the plugin files
-2. Upload to `/wp-content/plugins/google-ai-provider/`
+2. Upload to `/wp-content/plugins/ai-provider-for-google/`
 3. Ensure the PHP AI Client plugin is installed and activated
 4. Activate the plugin through the WordPress admin
 

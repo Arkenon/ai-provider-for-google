@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Google AI Provider Coding Standards">
-    <description>PSR-12 coding standards for Google AI Provider</description>
+<ruleset name="AI Provider for Google Coding Standards">
+    <description>PSR-12 coding standards for AI Provider for Google</description>
 
     <!-- Scan these files -->
     <file>src</file>
