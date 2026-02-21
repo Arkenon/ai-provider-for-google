@@ -1,6 +1,6 @@
 {
-    "name": "wordpress/google-ai-provider",
-    "description": "Google AI provider for the PHP AI Client SDK. Works as both a Composer package and WordPress plugin.",
+    "name": "wordpress/ai-provider-for-google",
+    "description": "AI Provider for Google for the PHP AI Client SDK. Works as both a Composer package and WordPress plugin.",
     "license": "GPL-2.0-or-later",
     "type": "wordpress-plugin",
     "keywords": [
@@ -16,10 +16,10 @@
             "homepage": "https://make.wordpress.org/ai/"
         }
     ],
-    "homepage": "https://github.com/WordPress/google-ai-provider",
+    "homepage": "https://github.com/WordPress/ai-provider-for-google",
     "support": {
-        "issues": "https://github.com/WordPress/google-ai-provider/issues",
-        "source": "https://github.com/WordPress/google-ai-provider"
+        "issues": "https://github.com/WordPress/ai-provider-for-google/issues",
+        "source": "https://github.com/WordPress/ai-provider-for-google"
     },
     "require": {
         "php": ">=7.4"

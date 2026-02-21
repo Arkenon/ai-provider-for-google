@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PSR-4 autoloader for the Google AI Provider package.
+ * PSR-4 autoloader for the AI Provider for Google package.
  *
  * @since 1.0.0
  *
