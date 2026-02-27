@@ -92,6 +92,17 @@ class GoogleModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
             throw ResponseException::fromMissingData('Google', 'models');
         }
 
+        $allModalityCombinationsWithText = [
+            [ModalityEnum::text()],
+            [ModalityEnum::text(), ModalityEnum::image()],
+            [ModalityEnum::text(), ModalityEnum::audio()],
+            [ModalityEnum::text(), ModalityEnum::document()],
+            [ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::audio()],
+            [ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::document()],
+            [ModalityEnum::text(), ModalityEnum::audio(), ModalityEnum::document()],
+            [ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::audio(), ModalityEnum::document()],
+        ];
+
         $geminiCapabilities = [
             CapabilityEnum::textGeneration(),
             CapabilityEnum::chatHistory(),
@@ -121,11 +132,7 @@ class GoogleModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
         $geminiOptions = array_merge($geminiBaseOptions, [
             new SupportedOption(
                 OptionEnum::inputModalities(),
-                [
-                    [ModalityEnum::text()],
-                    [ModalityEnum::text(), ModalityEnum::image()],
-                    [ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::audio()],
-                ]
+                $allModalityCombinationsWithText
             ),
             new SupportedOption(OptionEnum::outputModalities(), [[ModalityEnum::text()]]),
             new SupportedOption(OptionEnum::webSearch()),
@@ -133,16 +140,13 @@ class GoogleModelMetadataDirectory extends AbstractOpenAiCompatibleModelMetadata
         $geminiMultimodalImageOutputOptions = array_merge($geminiBaseOptions, [
             new SupportedOption(
                 OptionEnum::inputModalities(),
-                [
-                    [ModalityEnum::text()],
-                    [ModalityEnum::text(), ModalityEnum::image()],
-                    [ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::audio()],
-                ]
+                $allModalityCombinationsWithText
             ),
             new SupportedOption(
                 OptionEnum::outputModalities(),
                 [
                     [ModalityEnum::text()],
+                    [ModalityEnum::image()],
                     [ModalityEnum::text(), ModalityEnum::image()],
                 ]
             ),
