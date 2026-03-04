@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WordPress\GoogleAiProvider\Provider;
 
+use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Providers\ApiBasedImplementation\AbstractApiProvider;
 use WordPress\AiClient\Providers\ApiBasedImplementation\ListModelsApiBasedProviderAvailability;
@@ -78,13 +79,24 @@ class GoogleProvider extends AbstractApiProvider
      */
     protected static function createProviderMetadata(): ProviderMetadata
     {
-        return new ProviderMetadata(
+        $providerMetadataArgs = [
             'google',
             'Google',
             ProviderTypeEnum::cloud(),
             'https://aistudio.google.com/app/api-keys',
             RequestAuthenticationMethod::apiKey()
-        );
+        ];
+        // Provider description support was added in 1.2.0.
+        if (version_compare(AiClient::VERSION, '1.2.0', '>=')) {
+            // For WordPress, we should translate the description.
+            if (function_exists('__')) {
+                // phpcs:ignore Generic.Files.LineLength.TooLong
+                $providerMetadataArgs[] = __('Text and image generation with Gemini and Imagen.', 'ai-provider-for-google');
+            } else {
+                $providerMetadataArgs[] = 'Text and image generation with Gemini and Imagen.';
+            }
+        }
+        return new ProviderMetadata(...$providerMetadataArgs);
     }
 
     /**
