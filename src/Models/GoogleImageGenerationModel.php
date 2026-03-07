@@ -78,12 +78,17 @@ class GoogleImageGenerationModel extends AbstractApiBasedModel implements ImageG
      */
     public function generateImageResult(array $prompt): GenerativeAiResult
     {
-        /*
-         * Gemini models that can generate images are multimodal and therefore
-         * go through the more flexible `generateContent` endpoint, which is
-         * used by the `GoogleTextGenerationModel` class.
-         */
+        // TODO: Remove this workaround soon - here just for backward compatibility when
+        // GoogleTextAndImageGenerationModel did not exist.
         if (str_starts_with($this->metadata()->getId(), 'gemini-')) {
+            _doing_it_wrong(
+                __METHOD__,
+                sprintf(
+                    'Gemini image models should be used via %s going forward.',
+                    GoogleTextAndImageGenerationModel::class
+                ),
+                'n.e.x.t'
+            );
             $multimodalOutputModel = new GoogleTextGenerationModel($this->metadata(), $this->providerMetadata());
             $multimodalOutputModel->setConfig($this->getConfig());
             $multimodalOutputModel->setHttpTransporter($this->getHttpTransporter());
