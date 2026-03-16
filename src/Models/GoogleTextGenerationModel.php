@@ -56,6 +56,8 @@ use WordPress\GoogleAiProvider\Provider\GoogleProvider;
  */
 class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGenerationModelInterface
 {
+    use WithAspectRatioTrait;
+
     /**
      * {@inheritDoc}
      *
@@ -129,6 +131,18 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
         $outputModalities = $config->getOutputModalities();
         if (is_array($outputModalities)) {
             $generationConfig['responseModalities'] = $this->prepareResponseModalitiesParam($outputModalities);
+            if (in_array('Image', $generationConfig['responseModalities'], true)) {
+                $outputMediaOrientation = $config->getOutputMediaOrientation();
+                $outputMediaAspectRatio = $config->getOutputMediaAspectRatio();
+                if ($outputMediaOrientation !== null || $outputMediaAspectRatio !== null) {
+                    $generationConfig['imageConfig'] = [
+                        'aspectRatio' => $this->prepareAspectRatioParam(
+                            $outputMediaOrientation,
+                            $outputMediaAspectRatio
+                        ),
+                    ];
+                }
+            }
         }
 
         $candidateCount = $config->getCandidateCount();
