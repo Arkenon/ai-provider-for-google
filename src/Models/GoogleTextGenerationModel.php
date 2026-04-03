@@ -201,7 +201,8 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             if ($outputMimeType === 'application/json') {
                 $outputSchema = $config->getOutputSchema();
                 if ($outputSchema) {
-                    $generationConfig['responseSchema'] = $outputSchema;
+                    // The Google AI API does not allow the `additionalProperties` key for response schemas.
+                    $generationConfig['responseSchema'] = $this->removeAdditionalPropertiesKey($outputSchema);
                 }
             }
         }
