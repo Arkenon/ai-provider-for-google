@@ -201,7 +201,8 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             if ($outputMimeType === 'application/json') {
                 $outputSchema = $config->getOutputSchema();
                 if ($outputSchema) {
-                    $generationConfig['responseSchema'] = $outputSchema;
+                    // The Google AI API does not allow the `additionalProperties` key for response schemas.
+                    $generationConfig['responseSchema'] = $this->removeAdditionalPropertiesKey($outputSchema);
                 }
             }
         }
@@ -517,6 +518,20 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             /** @var array<string, mixed> $childSchema */
             foreach ($schema['properties'] as $key => $childSchema) {
                 $schema['properties'][$key] = $this->removeAdditionalPropertiesKey($childSchema);
+            }
+        }
+        if (isset($schema['items']) && is_array($schema['items'])) {
+            if (array_is_list($schema['items'])) {
+                foreach ($schema['items'] as $key => $itemSchema) {
+                    if (is_array($itemSchema)) {
+                        /** @var array<string, mixed> $itemSchema */
+                        $schema['items'][$key] = $this->removeAdditionalPropertiesKey($itemSchema);
+                    }
+                }
+            } else {
+                /** @var array<string, mixed> $items */
+                $items = $schema['items'];
+                $schema['items'] = $this->removeAdditionalPropertiesKey($items);
             }
         }
         return $schema;
