@@ -94,6 +94,10 @@ class GoogleProvider extends AbstractApiProvider
                 $providerMetadataArgs[] = 'Text and image generation with Gemini and Imagen.';
             }
         }
+        // Provider logoPath support was added in 1.3.0.
+        if (version_compare(AiClient::VERSION, '1.3.0', '>=')) {
+            $providerMetadataArgs[] = dirname(__DIR__, 2) . '/assets/images/google.svg';
+        }
         return new ProviderMetadata(...$providerMetadataArgs);
     }
 
