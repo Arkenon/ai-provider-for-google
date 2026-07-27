@@ -514,10 +514,30 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
         if (isset($schema['additionalProperties'])) {
             unset($schema['additionalProperties']);
         }
+        if (isset($schema['type']) && is_array($schema['type'])) {
+            $hasNull = in_array('null', $schema['type'], true);
+            $primary = null;
+            foreach ($schema['type'] as $t) {
+                if (is_string($t) && $t !== 'null') {
+                    $primary = $t;
+                    break;
+                }
+            }
+            $schema['type'] = $primary ?? 'string';
+            if ($hasNull) {
+                $schema['nullable'] = true;
+            }
+        }
         if (isset($schema['properties']) && is_array($schema['properties'])) {
-            /** @var array<string, mixed> $childSchema */
-            foreach ($schema['properties'] as $key => $childSchema) {
-                $schema['properties'][$key] = $this->removeAdditionalPropertiesKey($childSchema);
+            if (count($schema['properties']) === 0) {
+                $schema['properties'] = new \stdClass();
+            } else {
+                /** @var array<string, mixed> $childSchema */
+                foreach ($schema['properties'] as $key => $childSchema) {
+                    if (is_array($childSchema)) {
+                        $schema['properties'][$key] = $this->removeAdditionalPropertiesKey($childSchema);
+                    }
+                }
             }
         }
         if (isset($schema['items']) && is_array($schema['items'])) {
