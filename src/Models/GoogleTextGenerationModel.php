@@ -702,7 +702,10 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
         $parts = [];
         foreach ($messageData['parts'] as $partIndex => $messagePartData) {
             try {
-                $parts[] = $this->parseResponseCandidateMessagePart($messagePartData);
+                $part = $this->parseResponseCandidateMessagePart($messagePartData);
+                if ($part !== null) {
+                    $parts[] = $part;
+                }
             } catch (InvalidArgumentException $e) {
                 throw ResponseException::fromInvalidData(
                     $this->providerMetadata()->getName(),
@@ -721,10 +724,16 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
      * @since 1.0.0
      *
      * @param array<string, mixed> $partData The message part data from the API response.
-     * @return MessagePart The parsed message part.
+     * @return MessagePart|null The parsed message part, or null to ignore.
      */
-    protected function parseResponseCandidateMessagePart(array $partData): MessagePart
+    protected function parseResponseCandidateMessagePart(array $partData): ?MessagePart
     {
+        if (isset($partData['toolCall']) || isset($partData['toolResponse'])) {
+            return null;
+        }
+        if (isset($partData['thoughtSignature']) && count($partData) === 1) {
+            return null;
+        }
         if (isset($partData['text'])) {
             if (!is_string($partData['text'])) {
                 throw new InvalidArgumentException('Part has an invalid text shape.');
