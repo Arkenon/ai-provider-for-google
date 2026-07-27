@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WordPress\GoogleAiProvider\Models;
 
+use WordPress\AiClient\AiClient;
 use WordPress\AiClient\Common\Exception\InvalidArgumentException;
 use WordPress\AiClient\Common\Exception\RuntimeException;
 use WordPress\AiClient\Files\DTO\File;
@@ -394,9 +395,20 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             if ($args !== null) {
                 $functionCallData['args'] = $args;
             }
-            return [
+            $partData = [
                 'functionCall' => $functionCallData,
             ];
+            /*
+             * Thinking models attach a thought signature to every function call part, and the
+             * Google AI API requires it to be sent back unchanged on all following turns of the
+             * same conversation. Without it a multi-turn tool call fails with "Function call is
+             * missing a thought_signature in functionCall parts".
+             */
+            $thoughtSignature = $this->getMessagePartThoughtSignature($part);
+            if ($thoughtSignature !== null) {
+                $partData['thoughtSignature'] = $thoughtSignature;
+            }
+            return $partData;
         }
         if ($type->isFunctionResponse()) {
             $functionResponse = $part->getFunctionResponse();
@@ -784,14 +796,57 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             if (is_array($args) && count($args) === 0) {
                 $args = null;
             }
-            return new MessagePart(
-                new FunctionCall(
-                    null,
-                    $partData['functionCall']['name'],
-                    $args
-                )
+            $functionCall = new FunctionCall(
+                null,
+                $partData['functionCall']['name'],
+                $args
             );
+            /*
+             * The thought signature of a function call must be preserved so that it can be sent
+             * back with the conversation history on subsequent turns. See getMessagePartData().
+             */
+            $thoughtSignature = isset($partData['thoughtSignature']) && is_string($partData['thoughtSignature'])
+                ? $partData['thoughtSignature']
+                : null;
+            if ($thoughtSignature !== null && self::supportsThoughtSignatures()) {
+                return new MessagePart($functionCall, null, $thoughtSignature);
+            }
+            return new MessagePart($functionCall);
         }
         throw new InvalidArgumentException('Part has an unexpected type.');
+    }
+
+    /**
+     * Returns the thought signature of a message part, if it carries one.
+     *
+     * @since n.e.x.t
+     *
+     * @param MessagePart $part The message part to get the thought signature for.
+     * @return string|null The thought signature, or null if there is none.
+     */
+    protected function getMessagePartThoughtSignature(MessagePart $part): ?string
+    {
+        if (!self::supportsThoughtSignatures()) {
+            return null;
+        }
+
+        $thoughtSignature = $part->getThoughtSignature();
+
+        return $thoughtSignature !== null && $thoughtSignature !== '' ? $thoughtSignature : null;
+    }
+
+    /**
+     * Checks whether the AI Client in use supports thought signatures on message parts.
+     *
+     * Thought signature support was added to the `MessagePart` DTO in AI Client 1.3.0. With an
+     * older version the signature cannot be carried across turns, so it is ignored.
+     *
+     * @since n.e.x.t
+     *
+     * @return bool True if thought signatures are supported, false otherwise.
+     */
+    protected static function supportsThoughtSignatures(): bool
+    {
+        return version_compare(AiClient::VERSION, '1.3.0', '>=');
     }
 }
