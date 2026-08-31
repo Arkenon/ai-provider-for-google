@@ -808,7 +808,7 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             $thoughtSignature = isset($partData['thoughtSignature']) && is_string($partData['thoughtSignature'])
                 ? $partData['thoughtSignature']
                 : null;
-            if ($thoughtSignature !== null && self::supportsThoughtSignatures()) {
+            if ($thoughtSignature !== null) {
                 return new MessagePart($functionCall, null, $thoughtSignature);
             }
             return new MessagePart($functionCall);
@@ -826,27 +826,8 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
      */
     protected function getMessagePartThoughtSignature(MessagePart $part): ?string
     {
-        if (!self::supportsThoughtSignatures()) {
-            return null;
-        }
-
         $thoughtSignature = $part->getThoughtSignature();
 
         return $thoughtSignature !== null && $thoughtSignature !== '' ? $thoughtSignature : null;
-    }
-
-    /**
-     * Checks whether the AI Client in use supports thought signatures on message parts.
-     *
-     * Thought signature support was added to the `MessagePart` DTO in AI Client 1.3.0. With an
-     * older version the signature cannot be carried across turns, so it is ignored.
-     *
-     * @since n.e.x.t
-     *
-     * @return bool True if thought signatures are supported, false otherwise.
-     */
-    protected static function supportsThoughtSignatures(): bool
-    {
-        return version_compare(AiClient::VERSION, '1.3.0', '>=');
     }
 }
