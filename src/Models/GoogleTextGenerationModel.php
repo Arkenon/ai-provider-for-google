@@ -528,17 +528,69 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
             unset($schema['additionalProperties']);
         }
         if (isset($schema['type']) && is_array($schema['type'])) {
-            $hasNull = in_array('null', $schema['type'], true);
-            $primary = null;
-            foreach ($schema['type'] as $t) {
-                if (is_string($t) && $t !== 'null') {
-                    $primary = $t;
-                    break;
+            /*
+             * Gemini's Schema accepts a scalar `type`, but supports unions through
+             * `anyOf`. Preserve every declared type instead of narrowing the schema
+             * to its first non-null member.
+             *
+             * A simple `T|null` union uses Gemini's `nullable` field for compatibility.
+             *
+             * @see https://ai.google.dev/api/generate-content#Schema
+             */
+            $types = [];
+            foreach ($schema['type'] as $type) {
+                if (!is_string($type)) {
+                    throw new InvalidArgumentException(
+                        'Schema type unions must contain only string values.'
+                    );
                 }
+                $types[] = $type;
             }
-            $schema['type'] = $primary ?? 'string';
-            if ($hasNull) {
-                $schema['nullable'] = true;
+
+            $types = array_values(array_unique($types));
+            if ($types === []) {
+                throw new InvalidArgumentException(
+                    'Schema type unions must contain at least one type.'
+                );
+            }
+
+            $nonNullTypes = array_values(
+                array_filter(
+                    $types,
+                    static function (string $type): bool {
+                        return $type !== 'null';
+                    }
+                )
+            );
+            $hasNull = count($types) !== count($nonNullTypes);
+
+            if (count($nonNullTypes) === 1) {
+                $schema['type'] = $nonNullTypes[0];
+
+                if ($hasNull) {
+                    $schema['nullable'] = true;
+                }
+            } elseif ($nonNullTypes === []) {
+                $schema['type'] = 'null';
+            } else {
+                if (isset($schema['anyOf'])) {
+                    throw new InvalidArgumentException(
+                        'A schema cannot combine an existing anyOf with a type union.'
+                    );
+                }
+
+                unset($schema['type']);
+
+                $schema['anyOf'] = array_map(
+                    static function (string $type): array {
+                        return ['type' => $type];
+                    },
+                    $nonNullTypes
+                );
+
+                if ($hasNull) {
+                    $schema['anyOf'][] = ['type' => 'null'];
+                }
             }
         }
         if (isset($schema['properties']) && is_array($schema['properties'])) {
@@ -565,6 +617,33 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
                 /** @var array<string, mixed> $items */
                 $items = $schema['items'];
                 $schema['items'] = $this->removeAdditionalPropertiesKey($items);
+            }
+        }
+        if (isset($schema['anyOf'])) {
+            /*
+             * Gemini defines every `anyOf` member as another Schema. Recursively
+             * normalize those members so nested type unions, empty properties maps,
+             * and unsupported additionalProperties fields do not reach the API.
+             *
+             * @see https://ai.google.dev/api/generate-content#Schema
+             */
+            if (!is_array($schema['anyOf']) || !array_is_list($schema['anyOf'])) {
+                throw new InvalidArgumentException(
+                    'The schema anyOf field must be a list of schemas.'
+                );
+            }
+
+            foreach ($schema['anyOf'] as $key => $childSchema) {
+                if (!is_array($childSchema)) {
+                    throw new InvalidArgumentException(
+                        'Every schema anyOf member must be an object.'
+                    );
+                }
+
+                /** @var array<string, mixed> $childSchema */
+                $schema['anyOf'][$key] = $this->removeAdditionalPropertiesKey(
+                    $childSchema
+                );
             }
         }
         return $schema;
