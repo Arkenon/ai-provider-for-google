@@ -542,8 +542,46 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
      */
     protected function removeAdditionalPropertiesKey(array $schema): array
     {
-        if (isset($schema['additionalProperties'])) {
-            unset($schema['additionalProperties']);
+        $supportedSchemaKeys = [
+            'anyOf',
+            'default',
+            'description',
+            'enum',
+            'example',
+            'format',
+            'items',
+            'maximum',
+            'maxItems',
+            'maxLength',
+            'maxProperties',
+            'minimum',
+            'minItems',
+            'minLength',
+            'minProperties',
+            'nullable',
+            'pattern',
+            'properties',
+            'propertyOrdering',
+            'required',
+            'title',
+            'type',
+        ];
+        $typeSpecificSchemaKeys = [
+            'array' => ['items', 'maxItems', 'minItems'],
+            'integer' => ['format', 'maximum', 'minimum'],
+            'number' => ['format', 'maximum', 'minimum'],
+            'object' => ['maxProperties', 'minProperties', 'properties', 'propertyOrdering', 'required'],
+            'string' => ['enum', 'format', 'maxLength', 'minLength', 'pattern'],
+        ];
+
+        /*
+         * Gemini rejects JSON Schema keywords that are not fields of its
+         * generateContent Schema, including additionalProperties and uniqueItems.
+         */
+        foreach (array_keys($schema) as $key) {
+            if (!in_array($key, $supportedSchemaKeys, true)) {
+                unset($schema[$key]);
+            }
         }
         if (isset($schema['type']) && is_array($schema['type'])) {
             /*
@@ -599,16 +637,56 @@ class GoogleTextGenerationModel extends AbstractApiBasedModel implements TextGen
 
                 unset($schema['type']);
 
-                $schema['anyOf'] = array_map(
-                    static function (string $type): array {
-                        return ['type' => $type];
-                    },
-                    $nonNullTypes
-                );
+                $typeSpecificKeys = [];
+                foreach ($typeSpecificSchemaKeys as $keys) {
+                    foreach ($keys as $key) {
+                        $typeSpecificKeys[$key] = true;
+                    }
+                }
+
+                $schema['anyOf'] = [];
+                foreach ($nonNullTypes as $type) {
+                    $branch = ['type' => $type];
+                    foreach ($typeSpecificSchemaKeys[$type] ?? [] as $key) {
+                        if (array_key_exists($key, $schema)) {
+                            $branch[$key] = $schema[$key];
+                        }
+                    }
+                    if ($type === 'array' && !array_key_exists('items', $branch)) {
+                        $branch['items'] = new \stdClass();
+                    }
+                    $schema['anyOf'][] = $branch;
+                }
+
+                foreach (array_keys($typeSpecificKeys) as $key) {
+                    unset($schema[$key]);
+                }
 
                 if ($hasNull) {
                     $schema['anyOf'][] = ['type' => 'null'];
                 }
+            }
+        }
+        if (array_key_exists('enum', $schema)) {
+            /*
+             * Gemini defines enum as string[] for STRING values. Numeric and other
+             * JSON Schema enum values cannot be represented by this field, so remove
+             * the constraint rather than sending invalid data or changing its type.
+             *
+             * @see https://ai.google.dev/api/generate-content#Schema
+             */
+            $hasOnlyStringValues = is_array($schema['enum']);
+            if ($hasOnlyStringValues) {
+                foreach ($schema['enum'] as $enumValue) {
+                    if (!is_string($enumValue)) {
+                        $hasOnlyStringValues = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!$hasOnlyStringValues || ($schema['type'] ?? null) !== 'string') {
+                unset($schema['enum']);
             }
         }
         if (isset($schema['properties']) && is_array($schema['properties'])) {
